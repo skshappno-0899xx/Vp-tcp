@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SHAPPNO — Login</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="page-login">
+
+<div class="bg-orbs">
+  <div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+</div>
+
+<div class="login-wrap">
+  <div class="login-card glass">
+    <div class="brand-big">SHAPPNO</div>
+    <div class="brand-sub">TCP BOT CONTROL PANEL</div>
+
+    {% if off %}
+      <div class="off-note">
+        <div class="off-emoji">🚫</div>
+        <div class="off-title">Website Offline</div>
+        <div class="off-text">এই ওয়েবসাইটটি এখন বন্ধ রয়েছে। পরে আবার চেষ্টা করুন।</div>
+      </div>
+    {% else %}
+      <div class="field">
+        <label>Username / Password</label>
+        <input id="identifier" type="text" placeholder="Enter anything to login" autocomplete="off">
+      </div>
+      <button class="btn-primary" onclick="doLogin()">Enter</button>
+      <div id="err" class="err"></div>
+    {% endif %}
+
+    <a href="/settings" class="settings-btn" title="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </a>
+  </div>
+</div>
+
+<script>
+async function doLogin(){
+  const v = document.getElementById('identifier').value.trim();
+  const err = document.getElementById('err'); err.textContent='';
+  if(!v){err.textContent='Enter username or password';return;}
+  const r = await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({identifier:v})});
+  const d = await r.json();
+  if(d.ok) window.location.href = d.redirect;
+  else err.textContent = d.msg || 'Login failed';
+}
+document.getElementById('identifier').addEventListener('keydown', e=>{if(e.key==='Enter')doLogin();});
+</script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SHAPPNO — Settings</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="page-login">
+<div class="bg-orbs">
+  <div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+</div>
+
+<div class="login-wrap">
+  <div class="login-card glass admin-card">
+    <div class="brand-big">⚙️ Settings</div>
+    <div class="brand-sub">ADMIN KEY LOGIN</div>
+    <div class="field">
+      <label>Access Password</label>
+      <input id="pw" type="password" placeholder="Enter admin password">
+    </div>
+    <button class="btn-primary" onclick="doLogin()">Login</button>
+    <div id="err" class="err"></div>
+    <a href="/" class="back-link">← Back to Home</a>
+  </div>
+</div>
+
+<script>
+async function doLogin(){
+  const pw = document.getElementById('pw').value.trim();
+  const err = document.getElementById('err');
+  err.textContent = '';
+  if(!pw){ err.textContent='Enter password'; return; }
+
+  const r = await fetch('/api/settings-login', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ password: pw })
+  });
+  const d = await r.json();
+  if(d.ok){
+    window.location.href = d.redirect;
+  } else {
+    err.textContent = d.msg || 'Invalid or expired password';
+  }
+}
+document.getElementById('pw').addEventListener('keydown', e=>{
+  if(e.key === 'Enter') doLogin();
+});
+</script>
+</body>
+</html>

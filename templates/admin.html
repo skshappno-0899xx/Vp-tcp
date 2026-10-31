@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SHAPPNO — Admin</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="page-login">
+<div class="bg-orbs">
+  <div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+</div>
+
+<!-- ══ STEP 1: Master Admin Login ══ -->
+<div id="loginStep" class="login-wrap">
+  <div class="login-card glass admin-card">
+    <div class="brand-big">👑 Admin</div>
+    <div class="brand-sub">MASTER PANEL</div>
+    <div class="field">
+      <label>Master Password</label>
+      <input id="pw" type="password" placeholder="Enter master password">
+    </div>
+    <button class="btn-primary" onclick="doLogin()">Login</button>
+    <div id="err" class="err"></div>
+    <a href="/" class="back-link">← Back to Home</a>
+  </div>
+</div>
+
+<!-- ══ STEP 2: Admin Panel ══ -->
+<div id="adminStep" style="display:none" class="page-dash">
+  <header class="topbar glass">
+    <div class="topbar-brand">👑 ADMIN PANEL</div>
+    <div class="topbar-right">
+      <a href="/admin-shappno/logout" class="logout-a">Logout</a>
+    </div>
+  </header>
+
+  <main class="dash-main">
+    <!-- Stats -->
+    <div class="stat-grid">
+      <div class="stat glass"><div class="stat-label">Users</div><div id="s_users" class="stat-num">-</div></div>
+      <div class="stat glass"><div class="stat-label">Bots</div><div id="s_bots" class="stat-num">-</div></div>
+      <div class="stat glass"><div class="stat-label">Running</div><div id="s_run" class="stat-num on">-</div></div>
+      <div class="stat glass"><div class="stat-label">Keys</div><div id="s_keys" class="stat-num">-</div></div>
+    </div>
+
+    <!-- Website ON/OFF -->
+    <div class="dash-head"><h2>Website Control</h2></div>
+    <div class="glass ctl-row">
+      <div>Website Status: <span id="webStatus" class="badge on">ON</span></div>
+      <button class="btn-primary sm" id="webBtn" onclick="toggleWebsite()">Temporary OFF</button>
+    </div>
+
+    <!-- Admin Keys -->
+    <div class="dash-head" style="margin-top:30px">
+      <h2>Admin Keys (Settings Passwords)</h2>
+      <button class="btn-primary sm" onclick="openKey()">+ Create Key</button>
+    </div>
+    <div class="table-wrap glass">
+      <table class="tbl">
+        <thead><tr><th>Password</th><th>Slots</th><th>Duration</th><th>Expires</th><th>Status</th><th></th></tr></thead>
+        <tbody id="keysBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Users -->
+    <div class="dash-head" style="margin-top:30px"><h2>Users</h2></div>
+    <div class="table-wrap glass">
+      <table class="tbl">
+        <thead><tr><th>ID</th><th>Username</th><th>Bots</th><th>Running</th><th>Login</th></tr></thead>
+        <tbody id="usersBody"></tbody>
+      </table>
+    </div>
+
+    <!-- All Bots -->
+    <div class="dash-head" style="margin-top:30px"><h2>All Bots</h2></div>
+    <div class="table-wrap glass">
+      <table class="tbl">
+        <thead><tr><th>ID</th><th>Owner</th><th>Name</th><th>UID</th><th>Region</th><th>Status</th></tr></thead>
+        <tbody id="botsBody"></tbody>
+      </table>
+    </div>
+
+    <!-- ══ DANGER ZONE ══ -->
+    <div class="dash-head" style="margin-top:40px"><h2 style="color:#f43f5e">⚠️ Danger Zone</h2></div>
+    <div class="glass ctl-row" style="border-color:#f43f5e66;background:linear-gradient(135deg,#f43f5e11,#00000000)">
+      <div>
+        <div style="font-weight:800;color:#f43f5e;font-size:16px">🗑 Delete All Public Users</div>
+        <div style="font-size:13px;color:#8b95b2;margin-top:6px;line-height:1.5">
+          সব <b>public user</b>, তাদের সব <b>bot</b>, আর <b>bot logs</b> — সব permanent delete হবে।<br>
+          Admin keys ও settings <b>safe</b> থাকবে।
+        </div>
+      </div>
+      <button class="btn-primary sm" style="background:linear-gradient(135deg,#f43f5e,#dc2626)"
+              onclick="openPurge()">Delete All</button>
+    </div>
+  </main>
+
+  <!-- Key modal -->
+  <div class="modal" id="keyModal">
+    <div class="modal-card glass">
+      <h3>Create Admin Key</h3>
+      <div class="field"><label>Password (login)</label><input id="k_pw" placeholder="Login password"></div>
+      <div class="field"><label>Slots</label><input id="k_slots" type="number" min="1" value="1"></div>
+      <div class="field"><label>Duration (hours)</label><input id="k_hours" type="number" min="1" value="24"></div>
+      <div class="modal-btns">
+        <button class="btn-ghost" onclick="closeKey()">Cancel</button>
+        <button class="btn-primary" onclick="createKey()">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Purge modal -->
+  <div class="modal" id="purgeModal">
+    <div class="modal-card glass" style="border-color:#f43f5e66;box-shadow:0 24px 70px #f43f5e44">
+      <h3 style="color:#f43f5e">⚠️ Confirm Delete</h3>
+      <p style="color:#8b95b2;font-size:14px;margin:14px 0 20px;line-height:1.6">
+        সব <b style="color:#f43f5e">public user</b>, তাদের সব <b style="color:#f43f5e">bot</b>,
+        আর <b style="color:#f43f5e">bot logs</b> permanently delete হবে।
+        <br><br>
+        <b style="color:#f43f5e">⚠️ এটা ফেরানো যাবে না!</b>
+      </p>
+      <div class="field">
+        <label>Type <b style="color:#f43f5e;font-family:monospace">DELETE</b> to confirm</label>
+        <input id="purgeInput" placeholder="DELETE" autocomplete="off" style="text-transform:uppercase">
+      </div>
+      <div class="modal-btns">
+        <button class="btn-ghost" onclick="closePurge()">Cancel</button>
+        <button class="btn-primary" style="background:linear-gradient(135deg,#f43f5e,#dc2626)"
+                onclick="doPurge()">Delete Everything</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Login ──
+async function doLogin(){
+  const pw = document.getElementById('pw').value.trim();
+  const err = document.getElementById('err');
+  err.textContent = '';
+  if(!pw){ err.textContent='Enter password'; return; }
+
+  const r = await fetch('/admin-shappno/login', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ password: pw })
+  });
+  const d = await r.json();
+  if(d.ok){
+    document.getElementById('loginStep').style.display = 'none';
+    document.getElementById('adminStep').style.display = 'block';
+    initAdmin();
+  } else {
+    err.textContent = d.msg || 'Wrong password';
+  }
+}
+document.getElementById('pw').addEventListener('keydown', e=>{
+  if(e.key === 'Enter') doLogin();
+});
+
+function initAdmin(){
+  loadStats(); loadKeys(); loadUsers(); loadBots();
+  setInterval(()=>{ loadStats(); loadUsers(); loadBots(); }, 8000);
+}
+
+async function loadStats(){
+  const r = await fetch('/admin-shappno/api/stats');
+  const d = await r.json();
+  if(!d.ok) return;
+  document.getElementById('s_users').textContent = d.stats.users;
+  document.getElementById('s_bots').textContent  = d.stats.bots;
+  document.getElementById('s_run').textContent   = d.stats.running;
+  document.getElementById('s_keys').textContent  = d.stats.keys;
+  const wb  = document.getElementById('webStatus');
+  const btn = document.getElementById('webBtn');
+  if(d.website_on){
+    wb.textContent='ON';  wb.className='badge on';
+    btn.textContent='Temporary OFF';
+  } else {
+    wb.textContent='OFF'; wb.className='badge off';
+    btn.textContent='Turn ON';
+  }
+}
+
+async function toggleWebsite(){
+  await fetch('/admin-shappno/api/website-toggle', { method:'POST' });
+  loadStats();
+}
+
+async function loadKeys(){
+  const r = await fetch('/admin-shappno/api/keys');
+  const d = await r.json();
+  const t = document.getElementById('keysBody');
+  t.innerHTML = d.keys.map(k=>{
+    const exp = new Date(k.expires_at*1000).toLocaleString();
+    const isExp = Math.floor(Date.now()/1000) > k.expires_at;
+    const status = isExp ? 'EXPIRED' : (k.active ? 'ACTIVE' : 'DISABLED');
+    const cls    = isExp ? 'off' : (k.active ? 'on' : 'off');
+    return `<tr>
+      <td><code>${k.password}</code></td>
+      <td>${k.slots}</td>
+      <td>${k.duration_hours}h</td>
+      <td>${exp}</td>
+      <td><span class="badge ${cls}">${status}</span></td>
+      <td>
+        <button class="act off" onclick="toggleKey(${k.id})">${k.active?'Disable':'Enable'}</button>
+        <button class="act del" onclick="delKey(${k.id})">Delete</button>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" class="empty-cell">No keys yet</td></tr>';
+}
+
+async function toggleKey(id){
+  await fetch(`/admin-shappno/api/keys/${id}/toggle`, { method:'POST' });
+  loadKeys();
+}
+async function delKey(id){
+  if(!confirm('Delete key?')) return;
+  await fetch(`/admin-shappno/api/keys/${id}/delete`, { method:'POST' });
+  loadKeys(); loadStats();
+}
+
+function openKey(){  document.getElementById('keyModal').style.display='flex'; }
+function closeKey(){ document.getElementById('keyModal').style.display='none'; }
+
+async function createKey(){
+  const pw    = document.getElementById('k_pw').value.trim();
+  const slots = parseInt(document.getElementById('k_slots').value);
+  const hours = parseInt(document.getElementById('k_hours').value);
+  if(!pw || slots<1 || hours<1){ alert('All fields required'); return; }
+
+  const r = await fetch('/admin-shappno/api/keys/create', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ password: pw, slots, duration_hours: hours })
+  });
+  const d = await r.json();
+  if(!d.ok){ alert(d.msg || 'Failed'); return; }
+  closeKey(); loadKeys(); loadStats();
+}
+
+async function loadUsers(){
+  const r = await fetch('/admin-shappno/api/users');
+  const d = await r.json();
+  const t = document.getElementById('usersBody');
+  t.innerHTML = d.users.map(u=>`
+    <tr>
+      <td>${u.id}</td>
+      <td>${u.username}</td>
+      <td>${u.bot_count}</td>
+      <td>${u.running_count}</td>
+      <td>${u.login_time ? new Date(u.login_time*1000).toLocaleString() : '-'}</td>
+    </tr>`).join('') || '<tr><td colspan="5" class="empty-cell">No users</td></tr>';
+}
+
+async function loadBots(){
+  const r = await fetch('/admin-shappno/api/bots');
+  const d = await r.json();
+  const t = document.getElementById('botsBody');
+  t.innerHTML = d.bots.map(b=>`
+    <tr>
+      <td>${b.id}</td>
+      <td>${b.owner_type}#${b.owner_id}</td>
+      <td>${b.bot_name}</td>
+      <td>${b.bot_uid}</td>
+      <td>${b.region}</td>
+      <td><span class="badge ${b.running?'on':'off'}">${b.running?'ON':'OFF'}</span></td>
+    </tr>`).join('') || '<tr><td colspan="6" class="empty-cell">No bots</td></tr>';
+}
+
+// ═══ PURGE (Danger Zone) ═══
+function openPurge(){
+  document.getElementById('purgeInput').value = '';
+  document.getElementById('purgeModal').style.display = 'flex';
+  setTimeout(()=>document.getElementById('purgeInput').focus(), 100);
+}
+function closePurge(){
+  document.getElementById('purgeModal').style.display = 'none';
+}
+async function doPurge(){
+  const val = document.getElementById('purgeInput').value.trim().toUpperCase();
+  if(val !== 'DELETE'){
+    alert('Type DELETE exactly to confirm');
+    return;
+  }
+  const r = await fetch('/admin-shappno/api/purge-public', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ confirm: 'DELETE' })
+  });
+  const d = await r.json();
+  if(d.ok){
+    closePurge();
+    alert('✅ All public users, bots & logs deleted');
+    loadStats(); loadUsers(); loadBots();
+  } else {
+    alert(d.msg || 'Failed');
+  }
+}
+</script>
+</body>
+</html>
